@@ -3,9 +3,6 @@
 // ====================================================================================================================================================
 #include "waves.h"
 
-#include "../imgui-src/imgui.h"
-#include "../imgui-src/imgui_impl_glfw.h"
-
 #include "../opengl-objects/computeShader.h"
 #include "../opengl-objects/framebuffer.h"
 #include "../opengl-objects/shader.h"
@@ -18,7 +15,6 @@
 #include <cstddef>
 #include <cstdio>
 #include <cstdlib>
-#include <filesystem>
 #include <thread>
 #include <vector>
 
@@ -67,7 +63,7 @@ int main() {
     return -1;
   }
 
-  std::string project = "/waves";
+  std::string project = "/src";
 
   // Shader creation
   Shader shader(project, "vertexShader.vs.glsl", "fragmentShader.fs.glsl");

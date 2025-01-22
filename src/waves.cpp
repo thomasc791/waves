@@ -3,11 +3,11 @@
 // ====================================================================================================================================================
 #include "waves.h"
 
-#include "../opengl-objects/computeShader.h"
-#include "../opengl-objects/framebuffer.h"
-#include "../opengl-objects/shader.h"
-#include "../opengl-objects/shaderStorageBuffer.h"
-#include "../opengl-objects/texture.h"
+#include "../opengl/opengl-objects/computeShader.h"
+#include "../opengl/opengl-objects/framebuffer.h"
+#include "../opengl/opengl-objects/shader.h"
+#include "../opengl/opengl-objects/shaderStorageBuffer.h"
+#include "../opengl/opengl-objects/texture.h"
 
 #include <array>
 #include <chrono>
@@ -105,7 +105,7 @@ int main() {
 
   const char *fps = "FPS";
   bool runIt = true;
-  bool pause = false;
+  bool pause = true;
   // render loop
   // -----------
   while (!glfwWindowShouldClose(window)) {

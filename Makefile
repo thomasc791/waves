@@ -12,6 +12,8 @@ FILES = shader \
 LIBFILES = glad
 
 FLAGS = -std=c++20 \
+				-lopencv_videoio \
+				-lopencv_core \
 				-lglfw \
 				-L./lib/\
 				-lglad \

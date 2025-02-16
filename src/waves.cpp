@@ -14,6 +14,11 @@
 #include <cmath>
 #include <cstddef>
 #include <cstdio>
+#ifdef RECORD_VIDEO
+#include <opencv2/core/matx.hpp>
+#include <opencv2/opencv.hpp>
+#include <opencv2/videoio.hpp>
+#endif
 #include <cstdlib>
 #include <thread>
 #include <vector>
@@ -26,7 +31,7 @@
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-const unsigned int TEXTURE_WIDTH = 1920, TEXTURE_HEIGHT = 1080;
+const unsigned int TEXTURE_WIDTH = 960, TEXTURE_HEIGHT = 540;
 
 GLuint VAO, VBO, FBO, RBO;
 
@@ -83,7 +88,7 @@ int main() {
     for (size_t i = 1; i < TEXTURE_WIDTH + 1; i++) {
       if (j > TEXTURE_HEIGHT / 2 - 10 && j < TEXTURE_HEIGHT / 2 + 10 &&
           i > TEXTURE_WIDTH / 2 - 10 && i < TEXTURE_WIDTH / 2 + 10) {
-        data[j * TEXTURE_WIDTH + i] = {10, 10, 10, 1.0};
+        data[j * TEXTURE_WIDTH + i] = {5, 5, 5, 1.0};
       } else {
         data[j * TEXTURE_WIDTH + i] = {0.0, 0.0, 0.0, 1.0};
       }
@@ -105,7 +110,14 @@ int main() {
 
   const char *fps = "FPS";
   bool runIt = true;
-  bool pause = true;
+  bool pause = false;
+#ifdef RECORD_VIDEO
+  cv::VideoWriter outputVideo;
+  int fourcc = cv::VideoWriter::fourcc('H', '2', '6', '4');
+  outputVideo.open("waves.mp4", fourcc, 15.0f,
+                   cv::Size(WINDOW_WIDTH, WINDOW_HEIGHT), true);
+  int saveFile = 0;
+#endif
   // render loop
   // -----------
   while (!glfwWindowShouldClose(window)) {
@@ -198,13 +210,6 @@ int main() {
       glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-      // This shader transfers the data from the previous
-      // iteration to the current
-      //
-      // uPrev = u
-      // u = uNext
-      //
-      // to prevent data races conditions
       dataSyncShader.use();
       dataSyncShader.setUIvec2("texSize", TEXTURE_WIDTH, TEXTURE_HEIGHT);
       dataSyncShader.setInt("imgOutput", texCS.texNum);
@@ -227,11 +232,31 @@ int main() {
       glfwMakeContextCurrent(backupCurrentContext);
     }
 
+#ifdef RECORD_VIDEO
+    saveFile++;
+    if (saveFile % 16 == 0) {
+      cv::Mat pixels(WINDOW_HEIGHT, WINDOW_WIDTH, CV_8UC3);
+      glReadPixels(0, 0, WINDOW_WIDTH, WINDOW_HEIGHT, GL_RGB, GL_UNSIGNED_BYTE,
+                   pixels.data);
+      cv::Mat cv_pixels(WINDOW_HEIGHT, WINDOW_WIDTH, CV_8UC3);
+      for (size_t y = 0; y < WINDOW_HEIGHT; y++) {
+        for (size_t x = 0; x < WINDOW_WIDTH; x++) {
+          cv_pixels.at<cv::Vec3b>(y, x)[2] =
+              pixels.at<cv::Vec3b>(WINDOW_HEIGHT - y - 1, x)[0];
+          cv_pixels.at<cv::Vec3b>(y, x)[1] =
+              pixels.at<cv::Vec3b>(WINDOW_HEIGHT - y - 1, x)[1];
+          cv_pixels.at<cv::Vec3b>(y, x)[0] =
+              pixels.at<cv::Vec3b>(WINDOW_HEIGHT - y - 1, x)[2];
+        }
+      }
+      outputVideo << cv_pixels;
+    }
+#endif
     glfwSwapBuffers(window);
 
     std::this_thread::sleep_for(
         std::chrono::microseconds(100 * (100 - simSpeed)));
-    fps = std::to_string((glfwGetTime() - startTime)).c_str();
+    fps = std::to_string(1 / (glfwGetTime() - startTime)).c_str();
   }
 
   ImGui_ImplOpenGL3_Shutdown();
@@ -242,6 +267,9 @@ int main() {
   // ------------------------------------------------------------------
   glfwDestroyWindow(window);
   glfwTerminate();
+#ifdef RECORD_VIDEO
+  outputVideo.release();
+#endif
   return 0;
 }
 

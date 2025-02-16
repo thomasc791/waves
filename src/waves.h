@@ -13,6 +13,8 @@
 
 #include <iostream>
 
+// #define RECORD_VIDEO
+
 struct Wave {
   float uPrev;
   float u;
